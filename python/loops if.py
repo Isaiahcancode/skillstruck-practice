@@ -1,10 +1,5 @@
-food = ["mushrooms", "broccoli", "fish"]
-for x in food:
-	if x == "mushrooms":
-		print(x + " are gross")
-	elif x == "broccoli":
-		print(x + "is gross")
-	elif x == "fish":
-		print(x + " is gross")
-	else:
-		print(x + "is not gross")
+my_list = ["mushrooms" ,"broccolli" ,"fish"]
+
+my_list = my_list + " are gross."
+
+print(my_list)
