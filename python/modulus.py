@@ -1,0 +1,5 @@
+number = input("Enter a number: ")
+number = int(number)
+number_2 = input("enter a number")
+number_2 = int(number_2)
+print(number % number_2)
