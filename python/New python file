@@ -1,0 +1,7 @@
+apple_amount = input("put a number")
+trees = 10
+apples = int(apple_amount)5
+if trees == apples*2:
+    print("True")
+else:
+    print("False")
