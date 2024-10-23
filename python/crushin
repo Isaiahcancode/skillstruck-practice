@@ -1,0 +1,13 @@
+import pygame
+import random
+
+pygame.init()
+
+box_len = 800
+box_height = 900
+color_1 = (255, 255, 255)  # white
+color_2 = (255, 255, 102)  # yellow
+color_3 = (0, 0, 0)        # black
+color_4 = (213, 200, 80)   # dark yellow
+color_5 = (0, 255, 0)      # green
+color_6 = (255, 0, 0)      # red
