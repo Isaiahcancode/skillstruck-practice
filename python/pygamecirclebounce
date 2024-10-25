@@ -42,4 +42,4 @@ while True:
     pygame.display.flip()
 
     # Frame rate
-    pygame.time.Clock().tick(60) 
+    pygame.time.Clock().tick(60)  # 60 frames per second
