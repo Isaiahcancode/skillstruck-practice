@@ -1,17 +1,18 @@
 import pygame
 import random
+import time
 
 pygame.init()
 
-# Constants
 box_len = 900
 box_height = 900
-color_1 = (0, 0, 0)  # white
+color_1 = (0, 0, 0)  # black
 color_2 = (204, 51, 0)  # reddish orange
-color_3 = (255, 255, 255)  # black
+color_3 = (255, 255, 255)  # white
 color_4 = (213, 200, 80)  # dark yellow
 color_5 = (0, 255, 0)  # green
 color_6 = (255, 0, 0)  # red
+color_7 = (150, 75, 0)  # brown
 
 add_caption = pygame.display.set_mode((box_len, box_height))
 pygame.display.set_caption("SNAKE GAME")
@@ -19,9 +20,14 @@ pygame.display.set_caption("SNAKE GAME")
 timer = pygame.time.Clock()
 snake_block = 10
 snake_speed = 15
+obstacle_count = 10
 
 display_style = pygame.font.SysFont("arial", 30, "bold")
 score_font = pygame.font.SysFont("arial", 45, "bold")
+
+TIME_ATTACK = "Time Attack"
+SURVIVAL = "Survival"
+OBSTACLE = "Obstacle"
 
 def final_score(score):
     value = score_font.render("Enjoy the snake game -------- Your score is: " + str(score), True, color_2)
@@ -41,13 +47,12 @@ def draw_button(text, x, y, width, height, color, hover_color):
 
     if x < mouse_pos[0] < x + width and y < mouse_pos[1] < y + height:
         pygame.draw.rect(add_caption, hover_color, (x, y, width, height))
-        if mouse_click[0]:  # Left mouse button clicked
-            return True  # Indicate the button was clicked
+        if mouse_click[0]:  
+            return True  
     else:
         pygame.draw.rect(add_caption, color, (x, y, width, height))
 
-    # Render the text
-    button_text = display_style.render(text, True, color_1)  # Use a contrasting text color
+    button_text = display_style.render(text, True, color_1)  
     text_rect = button_text.get_rect(center=(x + width / 2, y + height / 2))
     add_caption.blit(button_text, text_rect)
 
@@ -56,7 +61,7 @@ def draw_button(text, x, y, width, height, color, hover_color):
 def fade_in_text(text, y, color):
     alpha = 0
     while alpha < 255:
-        add_caption.fill(color_1)  # Clear the screen
+        add_caption.fill(color_1)
         menu_text = display_style.render(text, True, color)
         menu_text.set_alpha(alpha)
         add_caption.blit(menu_text, (box_len / 6, y))
@@ -77,20 +82,14 @@ def main_menu():
         add_caption.fill(color_1)
 
         for circle in circles:
-            # Update the position of the circle
             circle['pos'][0] += circle['speed'][0]
             circle['pos'][1] += circle['speed'][1]
-
-            # Bounce the circles off the edges
             if circle['pos'][0] < 0 or circle['pos'][0] > box_len:
                 circle['speed'][0] *= -1
             if circle['pos'][1] < 0 or circle['pos'][1] > box_height:
                 circle['speed'][1] *= -1
-
-            # Draw the circle
             pygame.draw.circle(add_caption, color_3, circle['pos'], circle['radius'])
 
-        # Color animation logic
         if increasing:
             color_value += fade_amount
             if color_value >= 255:
@@ -102,14 +101,17 @@ def main_menu():
                 color_value = 0
                 increasing = True
 
-        animated_color = (color_value, color_value, 255)  # Blue-ish fading color
+        animated_color = (color_value, color_value, 255)
 
-        # Draw the menu buttons with animations
-        if draw_button("Welcome", box_len / 6, box_height / 3 - 60, button_width, button_height, color_5, (0, 200, 0)):
-            print("Welcome button clicked")  # This line is optional; you can remove it
-        if draw_button("Press P to Play", box_len / 6, box_height / 3, button_width, button_height, color_2, (200, 100, 0)):
-            game_start()  # Start the game when this button is clicked
-        if draw_button("Press Q to Quit", box_len / 6, box_height / 3 + 60, button_width, button_height, color_4, (200, 200, 0)):
+        if draw_button("Welcome to Snake game", box_len / 6, box_height / 3 - 60, button_width, button_height, color_5, (0, 200, 0)):
+            print("Welcome button clicked")
+        if draw_button("Time Attack Mode", box_len / 6, box_height / 3, 300, 50, color_5, (0, 200, 0)):
+            game_start(TIME_ATTACK)
+        if draw_button("Survival Mode", box_len / 6, box_height / 3 + 60, 300, 50, color_2, (200, 100, 0)):
+            game_start(SURVIVAL)
+        if draw_button("Obstacle Mode", box_len / 6, box_height / 3 + 120, 300, 50, color_4, (200, 200, 0)):
+            game_start(OBSTACLE)
+        if draw_button("Quit", box_len / 6, box_height / 3 + 180, 300, 50, color_4, (200, 200, 0)):
             pygame.quit()
             quit()
 
@@ -119,21 +121,15 @@ def main_menu():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_p:
-                    game_start()
-                if event.key == pygame.K_q:
-                    pygame.quit()
-                    quit()
 
         timer.tick(30)
+
 def spawn_food():
     food_x = round(random.randrange(0, box_len - snake_block) / 10.0) * 10.0
     food_y = round(random.randrange(0, box_height - snake_block) / 10.0) * 10.0
     return food_x, food_y
 
 def move_enemy_chase(enemy_position, player_position):
-    # Basic chasing behavior: move towards the player's position
     if enemy_position[0] < player_position[0]:
         enemy_position[0] += snake_block
     elif enemy_position[0] > player_position[0]:
@@ -146,7 +142,19 @@ def move_enemy_chase(enemy_position, player_position):
 
     return enemy_position
 
-def game_start():
+def place_obstacles(num_obstacles):
+    obstacles = []
+    for _ in range(num_obstacles):
+        obstacle_x = round(random.randrange(0, box_len - snake_block) / 10.0) * 10.0
+        obstacle_y = round(random.randrange(0, box_height - snake_block) / 10.0) * 10.0
+        obstacles.append([obstacle_x, obstacle_y])
+    return obstacles
+
+def show_remaining_time(remaining_time):
+    time_text = score_font.render(f"Time Left: {int(remaining_time)}s", True, color_2)
+    add_caption.blit(time_text, [20, 60])
+
+def game_start(mode):
     global snake_speed
 
     game_over = False
@@ -159,24 +167,38 @@ def game_start():
 
     list_snake = []
     snake_len = 1
-    food_collected = 0  # Count of food collected
+    food_collected = 0  
 
-    foodx_pos, foody_pos = spawn_food()  # Spawn initial food
+    foodx_pos, foody_pos = spawn_food()  
 
-    enemy_position = None  # Enemy starts as None
+    time_limit = 60 if mode == TIME_ATTACK else None
+    start_time = time.time() if mode == TIME_ATTACK else None
 
-    enemy_move_delay = 20  # Delay in frames for enemy movement
-    enemy_move_timer = 0  # Timer to keep track of enemy movement delay
+    if mode == OBSTACLE:
+        obstacles = place_obstacles(obstacle_count)  
+    
+    # Initialize enemy snake
+    enemy_snake_position = [random.randint(0, box_len // snake_block) * snake_block,
+                             random.randint(0, box_height // snake_block) * snake_block]
+    enemy_snake_length = 1
+    enemy_snake_body = [enemy_snake_position]
+
+    enemy_move_timer = 0  # Timer to control enemy movement
+    enemy_move_delay = 15  # Delay in frames before the enemy moves
 
     while not game_over:
+        if mode == TIME_ATTACK:
+            remaining_time = time_limit - (time.time() - start_time)
+            if remaining_time <= 0:
+                game_close = True
+
         while game_close:
             add_caption.fill(color_6)
             display_msg("You lost!", color_4)
             final_score(snake_len - 1)
 
-            # Draw buttons for Restart and Quit
             if draw_button("Restart", box_len / 6, box_height / 2 - 40, 200, 50, color_5, (0, 200, 0)):
-                game_start()  # Restart the game
+                game_start(mode)
             if draw_button("Quit", box_len / 6, box_height / 2 + 20, 200, 50, color_4, (200, 200, 0)):
                 pygame.quit()
                 quit()
@@ -184,15 +206,6 @@ def game_start():
             pygame.display.update()
 
             for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_q:
-                        game_over = True
-                        game_close = False
-                    if event.key == pygame.K_c:
-                        snake_speed = 15
-                        game_start()
-                        return
-
                 if event.type == pygame.QUIT:
                     game_over = True
                     game_close = False
@@ -200,6 +213,7 @@ def game_start():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game_over = True
+
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT and new_x1 == 0:
                     new_x1 = -snake_block
@@ -214,25 +228,17 @@ def game_start():
                     new_y1 = snake_block
                     new_x1 = 0
 
-        value_x1 += new_x1
-        value_y1 += new_y1
-
-        # Check for boundary collision
         if value_x1 >= box_len or value_x1 < 0 or value_y1 >= box_height or value_y1 < 0:
             game_close = True
 
-        # Update enemy position if it exists
-        if enemy_position:
-            enemy_move_timer += 1  # Increment enemy move timer
-            if enemy_move_timer >= enemy_move_delay:
-                enemy_position = move_enemy_chase(enemy_position, [value_x1, value_y1])
-                enemy_move_timer = 0  # Reset timer after moving enemy
-
+        value_x1 += new_x1
+        value_y1 += new_y1
         add_caption.fill(color_1)
+
         pygame.draw.rect(add_caption, color_5, [foodx_pos, foody_pos, snake_block, snake_block])
+
         snake_head = [value_x1, value_y1]
         list_snake.append(snake_head)
-
         if len(list_snake) > snake_len:
             del list_snake[0]
 
@@ -240,27 +246,49 @@ def game_start():
             if x == snake_head:
                 game_close = True
 
+        # Enemy snake movement control
+        enemy_move_timer += 1
+        if enemy_move_timer >= enemy_move_delay:
+            enemy_snake_position = move_enemy_chase(enemy_snake_position, snake_head)
+            enemy_snake_body.append(enemy_snake_position)
+            enemy_move_timer = 0  # Reset the timer
+
+        if len(enemy_snake_body) > enemy_snake_length:
+            del enemy_snake_body[0]
+
+        # Draw enemy snake
+        for segment in enemy_snake_body[:-1]:
+            pygame.draw.rect(add_caption, color_6, [segment[0], segment[1], snake_block, snake_block])
+            if snake_head == segment:  # Check for collision with enemy snake
+                game_close = True
+
+        if mode == OBSTACLE:
+            for obstacle in obstacles:
+                pygame.draw.rect(add_caption, color_7, [obstacle[0], obstacle[1], snake_block, snake_block])
+                if snake_head == obstacle:
+                    game_close = True
+
         make_snake(snake_block, list_snake)
         final_score(snake_len - 1)
 
-        # Check if snake collects food
-        if value_x1 == foodx_pos and value_y1 == foody_pos:
-            foodx_pos, foody_pos = spawn_food()
-            snake_len += 1  # Increase snake length
-            food_collected += 1  # Increment food collected counter
-
-            # Spawn enemy when 15 pieces of food are collected
-            if food_collected == 15:
-                enemy_position = [random.randrange(0, box_len, snake_block), random.randrange(0, box_height, snake_block)]
-
-        # Draw the enemy if it exists
-        if enemy_position:
-            pygame.draw.rect(add_caption, color_6, [enemy_position[0], enemy_position[1], snake_block, snake_block])
-            # Check for collision with enemy
-            if snake_head == enemy_position:
-                game_close = True
+        if mode == TIME_ATTACK:
+            show_remaining_time(remaining_time)
 
         pygame.display.update()
+
+        if value_x1 == foodx_pos and value_y1 == foody_pos:
+            foodx_pos, foody_pos = spawn_food()
+            snake_len += 1
+            food_collected += 1
+            enemy_move_delay -= 1
+            snake_speed += 1  
+
+            if enemy_snake_length <= snake_len:  # Increase enemy snake length as player grows
+                enemy_snake_length += 1
+
         timer.tick(snake_speed)
+
+    pygame.quit()
+    quit()
 
 main_menu()
